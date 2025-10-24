@@ -1,0 +1,7 @@
+Model Metrics
+
+Model Accuracy: 1.00000
+Model Precision: 1.00000
+Model Recall: 1.00000
+Model F1 Score: 1.00000
+Model MCC: 1.00000
