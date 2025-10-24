@@ -1,0 +1,30 @@
+data:
+  raw_data: data/raw/PhiUSIIL_Phishing_URL_Dataset.csv
+  processed_data: data/processed/Processed_PhiUSIIL_Phishing_URL_Dataset.csv
+  test_data: data/test/test_data.csv
+
+train_test_split:
+  test_size: 0.2
+  random_state: 42
+
+cross_validation:
+  splits: 5
+  metrics: evaluations/cross_validation_metrics.txt
+
+model_parameters:
+  objective: binary
+  metric: binary_logloss
+  random_state: 42
+  verbosity: -1
+
+model: model/phishing_detection_model.joblib
+
+model_metrics: evaluations/model_metrics.txt
+
+visualizations:
+  mutual_information_score_plot: visualizations/mutual_information_score_plot.png
+  confusion_matrix: visualizations/confusion_matrix_chart.png
+  roc_curve: visualizations/roc_curve_chart.png
+  precision_recall_curve: visualizations/precision_recall_curve_chart.png
+  shap_summary: visualizations/shap_summary_chart.png
+  last_tree: visualizations/last_tree_chart.png
