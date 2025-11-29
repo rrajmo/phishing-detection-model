@@ -11,7 +11,8 @@ def get_path(config):
    model_metrics = config["model_metrics"]
    visualizations = config["visualizations"]
    return {
-      "raw_data": BASE_DIR / data["raw_data"],
+      "raw_data_Mendeley": BASE_DIR / data["raw_data_Mendeley"],
+      "raw_data_PhiUSIIL": BASE_DIR / data["raw_data_PhiUSIIL"],
       "processed_data": BASE_DIR / data["processed_data"],
       "test_data": BASE_DIR / data["test_data"],
       "test_size": train_test_split["test_size"],

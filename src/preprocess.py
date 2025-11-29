@@ -1,130 +1,147 @@
-from paths import get_path
-from typing import List, Tuple, Any
 import pandas as pd
-from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.pipeline import Pipeline
-from sklearn.feature_selection import mutual_info_classif, SelectPercentile
-from utils import load_data
-import matplotlib.pyplot as plt
-import numpy as np
 import logging
+from pathlib import Path
+from typing import Tuple, Any
+from paths import get_path
+from similarity_url_index import get_maximum_similarity_url_index
+from extract_features import (
+    extract_url_length,
+    extract_domain_length,
+    is_domain_ip_address,
+    extract_character_continuation_rate,
+    extract_tld_length,
+    extract_number_of_subdomains,
+    extract_has_obfuscation,
+    extract_number_of_obfuscated_characters,
+    extract_obfuscation_ratio,
+    extract_number_of_letters,
+    extract_letter_ratio,
+    extract_number_of_digits,
+    extract_digit_ratio,
+    extract_number_of_equals_sign,
+    extract_number_of_question_mark,
+    extract_number_of_ampersand,
+    is_https
+)
 
 logger = logging.getLogger(__name__)
+
+BASE_DIR = Path(__file__).resolve().parents[1]
 
 def get_config(config: dict) -> Tuple[Any, Any, Any]:
     paths = get_path(config)
 
-    RAW_DATA_PATH = paths["raw_data"]
+    RAW_DATA_MENDELEY = paths["raw_data_Mendeley"]
+    RAW_DATA_PHIUSIIL = paths["raw_data_PhiUSIIL"]
     PROCESSED_DATA_PATH = paths["processed_data"]
-    MUTUAL_INFORMATION_SCORE_PLOT = paths["mutual_information_score_plot"]
 
-    if not RAW_DATA_PATH.exists():
-        raise FileNotFoundError(f"Data file not present at {RAW_DATA_PATH}")
+    if not RAW_DATA_MENDELEY.exists():
+        raise FileNotFoundError(f"Data file not present at {RAW_DATA_MENDELEY}")
+    if not RAW_DATA_PHIUSIIL.exists():
+        raise FileNotFoundError(f"Data file not present at {RAW_DATA_PHIUSIIL}")
     PROCESSED_DATA_PATH.parent.mkdir(parents=True, exist_ok=True)
-    MUTUAL_INFORMATION_SCORE_PLOT.parent.mkdir(parents=True, exist_ok=True)
 
-    return RAW_DATA_PATH, PROCESSED_DATA_PATH, MUTUAL_INFORMATION_SCORE_PLOT
+    return RAW_DATA_MENDELEY, RAW_DATA_PHIUSIIL, PROCESSED_DATA_PATH
 
-class ColumnCleaner(BaseEstimator, TransformerMixin):
-    def __init__(self, drop_columns: List[str]):
-        self.drop_columns = drop_columns
-        self.features = None
-    
-    def fit(self, X: pd.DataFrame, y: pd.Series) -> "ColumnCleaner":
-        logger.info("ColumnCleaner fit started")
-        logger.info("ColumnCleaner fit ended")
-        return self
+def load_raw_csv(file: str) -> pd.DataFrame:
+    df = pd.read_csv(file)
+    logger.info(f"Loaded data from {file}")
+    return df
 
-    def transform(self, X: pd.DataFrame) -> pd.DataFrame:
-        logger.info("ColumnCleaner transform started")
-        drop_columns = [col for col in self.drop_columns if col in X.columns]
-        self.features = [col for col in X.columns if col not in self.drop_columns]
-        logger.info("ColumnCleaner transform ended")
-        return X.drop(columns=drop_columns)
+def rename_url_column(df: pd.DataFrame) -> pd.DataFrame:
+    old_column = "url"
+    new_column = "URL"
+    df = df.rename(columns={old_column: new_column})
+    logger.info(f"Renamed column '{old_column}' to column '{new_column}'")
+    return df
 
-class MutualInfoClassification(BaseEstimator, TransformerMixin):
-    def __init__(self, percentile: int = 85):
-        self.selector = SelectPercentile(score_func=mutual_info_classif, percentile=percentile)
-        self.features = None
+def filter_urls(df: pd.DataFrame, minimum_length: int = 51) -> pd.DataFrame:
+    df["URL_Length"] = df["URL"].astype(str).apply(extract_url_length)
+    df_filtered = df[df["URL_Length"] >= minimum_length]
+    df_filtered = df_filtered.drop(columns=["URL_Length"])
+    logger.info(f"Filtered URLs with length greater than {minimum_length}")
+    logger.info(f"The number of rows to process is {len(df_filtered)}")
+    return df_filtered
 
-    def fit(self, X: pd.DataFrame, y: pd.Series) -> "MutualInfoClassification":
-        logger.info("MutualInfoClassification fit started")
-        self.selector.fit(X, y)
-        logger.info("MutualInfoClassification fit ended")
-        return self
-    
-    def transform(self, X: pd.DataFrame) -> pd.DataFrame:
-        logger.info("MutualInfoClassification transform started")
-        self.features = X.columns.tolist()
-        X_transform = self.selector.transform(X)
-        logger.info("MutualInfoClassification transform ended")
-        return X_transform
-    
-    def get_feature_names_out(self) -> List[str]:
-        mask = self.selector.get_support()
-        return [feature for feature, boolean in zip(self.features, mask) if boolean]
-    
-    def get_scores(self) -> np.ndarray:
-        mask = self.selector.get_support()
-        scores = self.selector.scores_
-        return scores[mask]
+def add_url_features(df: pd.DataFrame) -> pd.DataFrame:
+    df["URLLength"] = df["URL"].astype(str).apply(extract_url_length)
+    df["DomainLength"] = df["URL"].astype(str).apply(extract_domain_length)
+    df["IsDomainIP"] = df["URL"].astype(str).apply(is_domain_ip_address)
+    df["URLSimilarityIndex"] = df["URL"].astype(str).apply(get_maximum_similarity_url_index)
+    df["CharContinuationRate"] = df["URL"].astype(str).apply(extract_character_continuation_rate)
+    df["TLDLength"] = df["URL"].astype(str).apply(extract_tld_length)
+    df["NoOfSubDomain"] = df["URL"].astype(str).apply(extract_number_of_subdomains)
+    df["HasObfuscation"] = df["URL"].astype(str).apply(extract_has_obfuscation)
+    df["NoOfObfuscatedChar"] = df["URL"].astype(str).apply(extract_number_of_obfuscated_characters)
+    df["ObfuscationRatio"] = df["URL"].astype(str).apply(extract_obfuscation_ratio)
+    df["NoOfLettersInURL"] = df["URL"].astype(str).apply(extract_number_of_letters)
+    df["LetterRatioInURL"] = df["URL"].astype(str).apply(extract_letter_ratio)
+    df["NoOfDegitsInURL"] = df["URL"].astype(str).apply(extract_number_of_digits)
+    df["DegitRatioInURL"] = df["URL"].astype(str).apply(extract_digit_ratio)
+    df["NoOfEqualsInURL"] = df["URL"].astype(str).apply(extract_number_of_equals_sign)
+    df["NoOfQMarkInURL"] = df["URL"].astype(str).apply(extract_number_of_question_mark)
+    df["NoOfAmpersandInURL"] = df["URL"].astype(str).apply(extract_number_of_ampersand)
+    df["IsHTTPS"] = df["URL"].astype(str).apply(is_https)
+    df["label"] = df["type"].str.lower().map({"legitimate": 0, "phishing": 1})
+    df = df.drop(columns=["type"])
+    logger.info("Extracted URL features")
+    return df
 
-def feature_pipeline() -> Pipeline:
-    drop_columns = ["FILENAME", "URL", "Domain", "Title", "TLD"]
+def clean_current_data(df: pd.DataFrame, valid_columns: list) -> pd.DataFrame:
+    extra_columns = [c for c in df.columns if c not in valid_columns]
+    df = df.drop(columns=extra_columns)
+    df = df.reindex(columns=valid_columns)
+    logger.info("Removed extra columns from current data")
+    return df
 
-    pipeline = Pipeline(
-        steps=[
-            ("ColumnCleaner", ColumnCleaner(drop_columns=drop_columns)),
-            ("FeatureSelection", MutualInfoClassification())
-        ]
-    )
-    return pipeline
+def combine_datasets(df_phiusiil: pd.DataFrame, df_mendeley: pd.DataFrame) -> pd.DataFrame:
+    combined_df = pd.concat([df_phiusiil, df_mendeley], ignore_index=True)
+    logger.info("Combined both datasets")
+    return combined_df
 
-def fit_pipeline(pipeline: Pipeline, X: pd.DataFrame, y: pd.Series) -> np.ndarray:
-    X_processed = pipeline.fit_transform(X, y)
-    return X_processed
-
-def extract_selected_features(pipeline: Pipeline) -> List[str]:
-    selected_features = pipeline.named_steps["FeatureSelection"].get_feature_names_out()
-    return selected_features
-
-def create_processed_csv(file: str, X: pd.DataFrame, X_processed: np.ndarray, y: pd.Series, selected_features: List[str]) -> None:
-    final_df = pd.DataFrame(X_processed, columns=selected_features)
-    final_df = final_df.reset_index(drop=True)
-    urls = X["URL"].reset_index(drop=True)
-    labels = y.reset_index(drop=True)
-    final_df["URL"] = urls
-    final_df["label"] = labels
-    final_df.to_csv(file, index=False)
-    logger.info(f"Loaded processed data into {file}")
-
-def create_mutual_information_score_plot(file: str, pipeline: Pipeline, selected_features: List[str]) -> None:
-    feature_scores = pipeline.named_steps["FeatureSelection"].get_scores()
-    sort_index = np.argsort(feature_scores)[::-1]
-    sort_features = np.array(selected_features)[sort_index]
-    sort_scores = feature_scores[sort_index]
-
-    plt.figure(figsize=(25, 25))
-    plt.barh(sort_features, sort_scores, color='blue')
-    plt.xlabel("Mutual Information Scores")
-    plt.ylabel("Features")
-    plt.title("Top Mutual Information Scores")
-    plt.gca().invert_yaxis()
-    plt.tight_layout()
-    plt.savefig(file, bbox_inches='tight')
-    logger.info(f"Loaded mutual information score plot into {file}")
+def save_processed_csv(file: str, df: pd.DataFrame) -> None:
+    logger.info(f"Saved final dataset to {file}")
+    df.to_csv(file, index=False)
 
 def process_dataset(config: dict) -> None:
-    RAW_DATA_PATH, PROCESSED_DATA_PATH, MUTUAL_INFORMATION_SCORE_PLOT = get_config(config)
+    RAW_DATA_MENDELEY, RAW_DATA_PHIUSIIL, PROCESSED_DATA_PATH = get_config(config)
 
-    logger.info(f"Processing data from {RAW_DATA_PATH}")
-    _, X, y = load_data(RAW_DATA_PATH)
+    if PROCESSED_DATA_PATH.exists():
+        logger.info(f"{PROCESSED_DATA_PATH} already exists")
+        return
 
-    pipeline = feature_pipeline()
-    X_processed = fit_pipeline(pipeline, X, y)
-    logger.info(f"Finished processing data from {RAW_DATA_PATH}")
+    df_mendeley = load_raw_csv(RAW_DATA_MENDELEY)
+    df_mendeley = rename_url_column(df_mendeley)
 
-    selected_features = extract_selected_features(pipeline)
+    df_mendeley_filtered = filter_urls(df_mendeley, minimum_length=51)
+    df_mendeley_features = add_url_features(df_mendeley_filtered)
 
-    create_processed_csv(PROCESSED_DATA_PATH, X, X_processed, y, selected_features)
-    create_mutual_information_score_plot(MUTUAL_INFORMATION_SCORE_PLOT, pipeline, selected_features)
+    df_phiusiil = load_raw_csv(RAW_DATA_PHIUSIIL)
+
+    valid_columns = [
+        "URL",
+        "URLLength",
+        "DomainLength",
+        "IsDomainIP",
+        "URLSimilarityIndex",
+        "CharContinuationRate",
+        "TLDLength",
+        "NoOfSubDomain",
+        "HasObfuscation",
+        "NoOfObfuscatedChar",
+        "ObfuscationRatio",
+        "NoOfLettersInURL",
+        "LetterRatioInURL",
+        "NoOfDegitsInURL",
+        "DegitRatioInURL",
+        "NoOfEqualsInURL",
+        "NoOfQMarkInURL",
+        "NoOfAmpersandInURL",
+        "IsHTTPS",
+        "label",
+    ]
+
+    df_phiusiil_cleaned = clean_current_data(df_phiusiil, valid_columns)
+    combined_df = combine_datasets(df_phiusiil_cleaned, df_mendeley_features)
+
+    save_processed_csv(PROCESSED_DATA_PATH, combined_df)

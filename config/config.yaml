@@ -1,6 +1,7 @@
 data:
-  raw_data: data/raw/PhiUSIIL_Phishing_URL_Dataset.csv
-  processed_data: data/processed/Processed_PhiUSIIL_Phishing_URL_Dataset.csv
+  raw_data_PhiUSIIL: data/raw/PhiUSIIL_Phishing_URL_Dataset.csv
+  raw_data_Mendeley: data/raw/Mendeley_Dataset.csv
+  processed_data: data/processed/Processed_Dataset.csv
   test_data: data/test/test_data.csv
 
 train_test_split:

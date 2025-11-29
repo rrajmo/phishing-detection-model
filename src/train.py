@@ -57,7 +57,7 @@ def cross_validate_model(file: str, parameters: dict, X: Any, y: Any, n_splits: 
         f.write(f"Cross Validation Metrics\n\n")
         for i, accuracy in enumerate(fold_scores):
             f.write(f"Fold {i + 1} Accuracy: {accuracy:.5f}\n")
-        f.write(f"Average accuracy over {n_splits} folds: {average_score:.4f}\n")
+        f.write(f"Average accuracy over {n_splits} folds: {average_score:.5f}\n")
 
     logger.info(f"Loaded cross validation metrics into {file}")
 
@@ -72,7 +72,7 @@ def save_model(file: str, model: LightGBMClassifier) -> None:
 def train_model(config: dict) -> None:
     PROCESSED_DATA_PATH, TEST_DATA, MODEL_PATH, CV_METRICS, test_size, cv_splits, random_state, parameters = get_config(config)
 
-    _, X, y = load_data(PROCESSED_DATA_PATH)
+    X, y = load_data(PROCESSED_DATA_PATH)
 
     X_train, X_test, y_train, y_test = create_train_test_split(X, y, test_size, random_state)
     save_test_split(TEST_DATA, X_test, y_test)

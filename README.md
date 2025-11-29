@@ -26,16 +26,29 @@ cd src
 python main.py
 ```
 
-## Dataset Source
+## Dataset Sources
 
-The dataset used in this project is located in `data\raw\PhiUSIIL_Phishing_URL_Dataset.csv`
+Download the dataset from the publication:
 
-The dataset is from the publication:
-
-Prasad, A., & Chandra, S. (2023). *PhiUSIIL: A diverse security profile empowered phishing URL detection framework based on similarity index and incremental learning*. *Computers & Security*, 103545.
-DOI: https://doi.org/10.1016/j.cose.2023.103545
+Prasad, A., & Chandra, S. (2023). PhiUSIIL: A diverse security profile empowered phishing URL detection framework based on similarity index and incremental learning. Computers & Security, 103545. doi: https://doi.org/10.1016/j.cose.2023.103545
 
 This dataset is licensed under a Creative Commons Attribution 4.0 International (CC BY 4.0) license. This license allows sharing and adapting the dataset for any purpose, as long as appropriate credit is given to the original authors.
+
+Save the file as `data\raw\PhiUSIIL_Phishing_URL_Dataset.csv`
+
+Download the dataset from the dataset:
+
+KAITHOLIKKAL, JISHNU K S; B, Arthi  (2024), “Phishing URL dataset”, Mendeley Data, V1, doi: 10.17632/vfszbj9b36.1
+
+This dataset is licensed under a Creative Commons Attribution 4.0 International (CC BY 4.0) license. This license allows sharing and adapting the dataset for any purpose, as long as appropriate credit is given to the original authors.
+
+Save the file as `data\raw\Mendeley_Dataset.csv`
+
+Download the "Top 10 Million Websites" dataset from the Open PageRank Initiative
+
+Filter the dataset to include only the top 1000 URLs and remove duplicates based on domain names
+
+Save the file as `domains\top1thousanddomains.csv`
 
 ## Configuration Options
 

@@ -8,7 +8,6 @@ from sklearn.metrics import (
     precision_score,
     recall_score,
     f1_score,
-    matthews_corrcoef,
     confusion_matrix,
     ConfusionMatrixDisplay,
     RocCurveDisplay,
@@ -41,7 +40,7 @@ def load_model(model_file: str) -> Any:
 
 def run_inference(model_file: str, test_data_file: str) -> Tuple[Any, Any, Any, Any]:
     model = load_model(model_file)
-    _, X_test, y_test = load_data(test_data_file)
+    X_test, y_test = load_data(test_data_file)
     logger.info("Predicting labels for test data started")
     y_predictions = model.predict(X_test.drop(columns=["URL"]))
     y_predictions_probabilities = model.predict_probabilities(X_test.drop(columns=["URL"]))
@@ -53,7 +52,6 @@ def model_metrics_file(file: str, y_test: Any, y_predictions: Any) -> None:
     precision = precision_score(y_test, y_predictions, zero_division=0)
     recall = recall_score(y_test, y_predictions, zero_division=0)
     f1 = f1_score(y_test, y_predictions, zero_division=0)
-    mcc = matthews_corrcoef(y_test, y_predictions)
     
     with open(file, 'w') as f:
         f.write(f"Model Metrics\n\n")
@@ -61,7 +59,6 @@ def model_metrics_file(file: str, y_test: Any, y_predictions: Any) -> None:
         f.write(f"Model Precision: {precision:.5f}\n")
         f.write(f"Model Recall: {recall:.5f}\n")
         f.write(f"Model F1 Score: {f1:.5f}\n")
-        f.write(f"Model MCC: {mcc:.5f}\n")
 
     logger.info(f"Loaded model metrics into {file}")
 
